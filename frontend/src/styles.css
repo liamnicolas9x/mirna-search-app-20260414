@@ -1,0 +1,234 @@
+:root {
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  color: #f2f5ef;
+  background: #0e1c17;
+  --surface: rgba(9, 25, 21, 0.78);
+  --surface-strong: rgba(12, 33, 27, 0.92);
+  --border: rgba(198, 255, 221, 0.16);
+  --accent: #8ef0ba;
+  --accent-strong: #ccff82;
+  --muted: #adc8bb;
+  --shadow: 0 32px 80px rgba(0, 0, 0, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgba(112, 255, 187, 0.22), transparent 32%),
+    radial-gradient(circle at right, rgba(217, 255, 124, 0.15), transparent 24%),
+    linear-gradient(160deg, #07110e 0%, #102923 52%, #081512 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.page-shell {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent);
+  pointer-events: none;
+}
+
+.app-shell {
+  position: relative;
+  width: min(1240px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 64px;
+}
+
+.hero {
+  padding: 40px;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(20, 48, 39, 0.92), rgba(10, 24, 20, 0.88));
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.8rem;
+}
+
+.hero h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(2.4rem, 5vw, 4.8rem);
+  line-height: 0.95;
+}
+
+.hero-copy {
+  margin: 20px 0 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.search-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+  color: var(--muted);
+}
+
+.search-panel input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(3, 10, 8, 0.6);
+  color: inherit;
+  border-radius: 18px;
+  padding: 16px 18px;
+  outline: none;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.search-panel input:focus {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.table-card,
+.detail-card {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px 16px;
+}
+
+.table-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.table-header span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.table-wrap {
+  overflow: auto;
+  padding: 0 16px 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+th,
+td {
+  padding: 14px 12px;
+  text-align: left;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: top;
+  word-break: break-word;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+tbody tr:hover,
+tbody tr.selected {
+  background: rgba(142, 240, 186, 0.11);
+}
+
+.detail-card {
+  padding-bottom: 10px;
+}
+
+.detail-grid {
+  margin: 0;
+  padding: 0 24px 24px;
+}
+
+.detail-row {
+  display: grid;
+  gap: 6px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+dt {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+dd {
+  margin: 0;
+  color: #eef5ee;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.status-message {
+  margin: 0;
+  padding: 0 24px 20px;
+  color: var(--muted);
+}
+
+.status-message.error {
+  color: #ffb7b7;
+}
+
+@media (max-width: 960px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 28px;
+  }
+
+  .app-shell {
+    width: min(100% - 20px, 1240px);
+    padding-top: 20px;
+  }
+}
