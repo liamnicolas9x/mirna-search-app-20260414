@@ -1,20 +1,38 @@
 import { useEffect, useState } from "react";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD
-    ? "https://mirna-search-api-20260414.onrender.com"
-    : "http://localhost:8000");
-const DEFAULT_COLUMNS = [
-  "mirbase_id",
-  "mirbase_accession",
-  "mature_sequence",
-  "seed_m8",
-  "mir_family",
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const RESULT_COLUMNS = [
+  { key: "mirbase_id", label: "miRNA ID" },
+  { key: "mature_sequence", label: "Sequence" },
+  { key: "mir_family", label: "Description" },
 ];
 
 function formatValue(value) {
   return value === null || value === undefined || value === "" ? "N/A" : value;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function HighlightedValue({ value, query }) {
+  const formatted = String(formatValue(value));
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery || formatted === "N/A") {
+    return formatted;
+  }
+
+  const regex = new RegExp(`(${escapeRegExp(trimmedQuery)})`, "ig");
+  const parts = formatted.split(regex);
+
+  return parts.map((part, index) =>
+    index % 2 === 1 ? (
+      <mark key={`${part}-${index}`}>{part}</mark>
+    ) : (
+      <span key={`${part}-${index}`}>{part}</span>
+    ),
+  );
 }
 
 export default function App() {
@@ -73,21 +91,22 @@ export default function App() {
 
   return (
     <div className="page-shell">
-      <div className="backdrop" />
       <main className="app-shell">
         <section className="hero">
-          <p className="eyebrow">microRNA explorer</p>
-          <h1>Search mature sequences, families, and identifiers in one place.</h1>
+          <p className="eyebrow">microRNA Search Interface</p>
+          <h1>Research-oriented lookup for curated microRNA records</h1>
           <p className="hero-copy">
-            Powered by a FastAPI + SQLite backend generated directly from the supplied CSV.
+            Search identifiers, mature sequences, and family annotations from a CSV-derived
+            reference dataset.
           </p>
-          <label className="search-panel">
-            <span>Search microRNA records</span>
+          <label className="search-panel" htmlFor="mirna-search">
+            <span>Query dataset</span>
             <input
+              id="mirna-search"
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Try let, miR-21, or a family name"
+              placeholder="Search miRNA (e.g. let-7)"
             />
           </label>
         </section>
@@ -95,10 +114,19 @@ export default function App() {
         <section className="content-grid">
           <div className="table-card">
             <div className="table-header">
-              <h2>Results</h2>
-              <span>{loading ? "Searching..." : `${results.length} shown`}</span>
+              <div>
+                <h2>Search Results</h2>
+                <p className="table-subtitle">Matched records from the microRNA reference table</p>
+              </div>
+              <span>{loading ? "Searching..." : `${results.length} records`}</span>
             </div>
 
+            {loading ? (
+              <div className="loading-state" aria-live="polite">
+                <div className="spinner" />
+                <span>Loading matching records...</span>
+              </div>
+            ) : null}
             {error ? <p className="status-message error">{error}</p> : null}
             {!loading && !error && query.trim() && results.length === 0 ? (
               <p className="status-message">No results found</p>
@@ -108,8 +136,8 @@ export default function App() {
               <table>
                 <thead>
                   <tr>
-                    {DEFAULT_COLUMNS.map((column) => (
-                      <th key={column}>{column}</th>
+                    {RESULT_COLUMNS.map((column) => (
+                      <th key={column.key}>{column.label}</th>
                     ))}
                   </tr>
                 </thead>
@@ -120,8 +148,10 @@ export default function App() {
                       className={selected?.mirbase_id === row.mirbase_id ? "selected" : ""}
                       onClick={() => setSelected(row)}
                     >
-                      {DEFAULT_COLUMNS.map((column) => (
-                        <td key={`${row.mirbase_id}-${column}`}>{formatValue(row[column])}</td>
+                      {RESULT_COLUMNS.map((column) => (
+                        <td key={`${row.mirbase_id}-${column.key}`}>
+                          <HighlightedValue value={row[column.key]} query={query} />
+                        </td>
                       ))}
                     </tr>
                   ))}
@@ -132,8 +162,11 @@ export default function App() {
 
           <aside className="detail-card">
             <div className="table-header">
-              <h2>Detail</h2>
-              <span>{selected?.mirbase_id || "Pick a row"}</span>
+              <div>
+                <h2>Record Detail</h2>
+                <p className="table-subtitle">Structured view of the selected microRNA entry</p>
+              </div>
+              <span>{selected?.mirbase_id || "No selection"}</span>
             </div>
             {selected ? (
               <dl className="detail-grid">
