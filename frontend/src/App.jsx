@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? "https://mirna-search-api-20260414.onrender.com"
+    : "http://localhost:8000");
 const DEFAULT_COLUMNS = [
   "mirbase_id",
   "mirbase_accession",
