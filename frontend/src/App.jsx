@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./styles.css";
 import "./header.css";
 import logo from "./assets/logo.png";
+import defaultData from "./data/default.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -13,37 +14,114 @@ function normalizeQuery(input) {
   return q;
 }
 
+function isRNATail(input) {
+  const seq = input.toUpperCase();
+  return /^[AUGC]+$/.test(seq) && seq.length >= 5;
+}
+
+function getSeedPos(seq, seed) {
+  if (!seq || !seed) return null;
+  const s = seq.toUpperCase();
+  const sd = seed.toUpperCase();
+  const i = s.indexOf(sd);
+  if (i === -1) return null;
+  return [i + 1, i + sd.length];
+}
+
+function renderSeq(seq, seed, tail, showSeed, showColor) {
+  if (!seq) return seq;
+
+  const upper = seq.toUpperCase();
+  const tailUpper = tail?.toUpperCase();
+
+  return seq.split("").map((c, i) => {
+    let cls = "";
+
+    if (showColor) {
+      if (c === "A") cls += " base-a";
+      else if (c === "U") cls += " base-u";
+      else if (c === "G") cls += " base-g";
+      else if (c === "C") cls += " base-c";
+    }
+
+    if (showSeed && seed) {
+      const idx = upper.indexOf(seed.toUpperCase());
+      if (idx !== -1 && i >= idx && i < idx + seed.length) {
+        cls += " seed-highlight";
+      }
+    }
+
+    if (tailUpper && upper.endsWith(tailUpper)) {
+      const start = upper.length - tailUpper.length;
+      if (i >= start) cls += " tail-highlight";
+    }
+
+    return (
+      <span key={i} className={cls.trim()}>
+        {c}
+      </span>
+    );
+  });
+}
+
 export default function App() {
-  const [query, setQuery] = useState("miR-30a");
-  const [results, setResults] = useState([]);
-  const [originalResults, setOriginalResults] = useState([]); // 👉 lưu bản gốc
+  const inputRef = useRef(null); // ✅ ref cho input
+
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(defaultData);
+  const [originalResults, setOriginalResults] = useState(defaultData);
+
   const [loading, setLoading] = useState(false);
   const [familyMode, setFamilyMode] = useState(null);
+  const [toast, setToast] = useState("");
 
+  const [showSeed, setShowSeed] = useState(true);
+  const [showColor, setShowColor] = useState(true);
+  const [tailMode, setTailMode] = useState(false);
+
+  // ✅ AUTO FOCUS KHI LOAD + AUTO SELECT
   useEffect(() => {
-    const q = normalizeQuery(query);
-    if (!q) return;
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, []);
 
-    const timeout = setTimeout(async () => {
+  // search logic
+  useEffect(() => {
+    const raw = query.trim();
+    if (!raw) return;
+
+    const isTail = isRNATail(raw);
+    setTailMode(isTail);
+
+    const q = isTail ? raw.toUpperCase() : normalizeQuery(raw);
+
+    const t = setTimeout(async () => {
       setLoading(true);
       try {
         const res = await fetch(`${API_URL}/search?q=${q}`);
         const data = await res.json();
 
-        const base = data.results || [];
+        let base = data.results || [];
+
+        if (isTail) {
+          base = base.filter((r) =>
+            r.mature_sequence?.toUpperCase().endsWith(q)
+          );
+        }
+
         setResults(base);
-        setOriginalResults(base); // 👉 lưu lại
+        setOriginalResults(base);
         setFamilyMode(null);
-      } catch (err) {
-        console.error("Fetch error:", err);
+      } catch {
         setResults([]);
-        setOriginalResults([]);
       } finally {
         setLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(t);
   }, [query]);
 
   async function handleFamilyClick(row) {
@@ -54,35 +132,35 @@ export default function App() {
       const res = await fetch(`${API_URL}/search?q=${family}`);
       const data = await res.json();
 
-      const all = data.results || [];
-
-      const sameFamily = all.filter(
+      const same = (data.results || []).filter(
         (r) => r.mir_family === family
       );
 
       const final = [
         row,
-        ...sameFamily.filter((r) => r.mirbase_id !== row.mirbase_id),
+        ...same.filter((r) => r.mirbase_id !== row.mirbase_id),
       ];
 
       setResults(final);
-      setFamilyMode({ base: row, family });
-    } catch (err) {
-      console.error(err);
+      setFamilyMode({ family });
     } finally {
       setLoading(false);
     }
   }
 
-  // 👉 BACK BUTTON
   function handleBack() {
     setResults(originalResults);
     setFamilyMode(null);
   }
 
+  function copySequence(seq) {
+    navigator.clipboard.writeText(seq);
+    setToast("Copied!");
+    setTimeout(() => setToast(""), 1200);
+  }
+
   return (
     <div className="app">
-      {/* HEADER */}
       <header className="header">
         <div className="brand">
           <img src={logo} alt="logo" />
@@ -90,36 +168,34 @@ export default function App() {
         </div>
 
         <input
+          ref={inputRef} // ✅ gắn ref
           className="search-input"
+          placeholder="Search miRNA or tail sequence..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={(e) => e.target.select()}
-          placeholder="Search miRNA..."
+          onFocus={(e) => e.target.select()} // ✅ vẫn giữ
         />
       </header>
 
-      {/* MAIN */}
       <div className="layout">
         <div className="table">
           <div className="table-header">
             <h2>
-              Results {familyMode && `(Family: ${familyMode.family})`}
+              Results {tailMode && "(Tail search)"}{" "}
+              {familyMode && `(Family: ${familyMode.family})`}
             </h2>
 
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => setShowSeed(!showSeed)}>
+                {showSeed ? "Hide Seed" : "Show Seed"}
+              </button>
+
+              <button onClick={() => setShowColor(!showColor)}>
+                {showColor ? "Hide Color" : "Show Color"}
+              </button>
+
               {familyMode && (
-                <button
-                  onClick={handleBack}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
-                    cursor: "pointer",
-                    background: "#fde68a",
-                  }}
-                >
-                  ← Back
-                </button>
+                <button onClick={handleBack}>← Back</button>
               )}
 
               <span>
@@ -143,39 +219,72 @@ export default function App() {
             </thead>
 
             <tbody>
-              {results.map((r, i) => (
-                <tr key={r.mirbase_id}>
-                  <td>{i + 1}</td>
-                  <td>{r.mirbase_id}</td>
-                  <td>{r.mirbase_accession}</td>
-                  <td className="mono">{r.mature_sequence}</td>
-                  <td>{r.mature_sequence?.length}</td>
-                  <td>{r.seed_m8}</td>
-                  <td>{r.mir_family}</td>
-                  <td>
-                    <button
-                      onClick={() => handleFamilyClick(r)}
-                      style={{
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        cursor: "pointer",
-                        background: "#f1f5f9",
-                      }}
+              {results.map((r, i) => {
+                const seedPos = getSeedPos(
+                  r.mature_sequence,
+                  r.seed_m8
+                );
+
+                return (
+                  <tr key={r.mirbase_id}>
+                    <td>{i + 1}</td>
+                    <td>{r.mirbase_id}</td>
+                    <td className="mimat">{r.mirbase_accession}</td>
+
+                    <td
+                      className="sequence"
+                      onClick={() => copySequence(r.mature_sequence)}
                     >
-                      Family
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      {renderSeq(
+                        r.mature_sequence,
+                        r.seed_m8,
+                        tailMode ? query : null,
+                        showSeed,
+                        showColor
+                      )}
+                    </td>
+
+                    <td>{r.mature_sequence?.length}</td>
+
+                    <td className="seed">
+                      {r.seed_m8}
+                      {seedPos && (
+                        <span className="pos">
+                          {" "}
+                          ({seedPos[0]}–{seedPos[1]})
+                        </span>
+                      )}
+                    </td>
+
+                    <td>{r.mir_family}</td>
+
+                    <td>
+                      <button onClick={() => handleFamilyClick(r)}>
+                        Family
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* FOOTER */}
+      {toast && <div className="toast">{toast}</div>}
+
       <footer className="footer">
-        HGL web-tool. Database based on miRbase v.
+        <div>HGL web-tool. Database based on TargetScan v8.0</div>
+        <div>
+          Contact:{" "}
+          <a
+            href="https://hglab.hcmus.edu.vn"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            https://hglab.hcmus.edu.vn
+          </a>
+        </div>
       </footer>
     </div>
   );

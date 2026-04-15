@@ -1,3 +1,4 @@
+/* GLOBAL */
 body {
   margin: 0;
   font-family: system-ui;
@@ -24,7 +25,7 @@ body {
   width: 300px;
 }
 
-/* LAYOUT (1 COLUMN) */
+/* LAYOUT */
 .layout {
   display: block;
   padding: 16px;
@@ -60,11 +61,60 @@ tr:hover {
   background: #f1f5f9;
 }
 
+/* MONO TEXT */
 .mono {
   font-family: monospace;
   background: #f1f5f9;
   padding: 2px 6px;
   border-radius: 6px;
+}
+
+/* SEQUENCE (CLICKABLE + HOVER) */
+.sequence {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.sequence:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+  transform: scale(1.02);
+}
+
+.sequence:active {
+  background: #bae6fd;
+  transform: scale(0.98);
+}
+
+/* MIMAT + SEED */
+.mimat {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.seed {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* BUTTON */
+button {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background: #f1f5f9;
+  transition: 0.15s;
+}
+
+button:hover {
+  background: #e2e8f0;
 }
 
 /* FOOTER */
@@ -73,4 +123,85 @@ tr:hover {
   padding: 16px;
   color: #6b7280;
   font-size: 14px;
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #0ea5e9;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  animation: fadeInOut 1.5s ease;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+/* SEED HIGHLIGHT */
+.seed-highlight {
+  background: #fde68a;
+  color: #92400e;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+/* SEED HIGHLIGHT */
+.seed-highlight {
+  background: #fde68a;
+  color: #92400e;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+/* BASE COLORS */
+.base-a {
+  color: #ef4444; /* đỏ */
+  font-weight: 600;
+}
+
+.base-u {
+  color: #3b82f6; /* xanh */
+  font-weight: 600;
+}
+
+.base-g {
+  color: #10b981; /* xanh lá */
+  font-weight: 600;
+}
+
+.base-c {
+  color: #f59e0b; /* cam */
+  font-weight: 600;
+}
+.tail-highlight {
+  background: #bbf7d0;
+  color: #065f46;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.pos {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-left: 4px;
+  font-style: italic;
 }

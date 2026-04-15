@@ -11,13 +11,11 @@ from db import get_record_by_id, initialize_database, search_records
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     initialize_database()
     logging.info("SERVER STARTED")
     yield
-
 
 app = FastAPI(title="microRNA Search API", lifespan=lifespan)
 app.add_middleware(
@@ -28,11 +26,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/health", response_class=PlainTextResponse)
 async def healthcheck() -> str:
     return "OK"
-
 
 @app.get("/search")
 async def search(q: str = Query(..., min_length=1), limit: int = Query(50, ge=1, le=100)):
@@ -46,14 +42,12 @@ async def search(q: str = Query(..., min_length=1), limit: int = Query(50, ge=1,
         "results": results,
     }
 
-
 @app.get("/mirna/{mirna_id}")
 async def get_mirna(mirna_id: str):
     record = get_record_by_id(mirna_id.strip())
     if record is None:
         raise HTTPException(status_code=404, detail="microRNA not found")
     return record
-
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
