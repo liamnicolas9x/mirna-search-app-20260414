@@ -205,3 +205,36 @@ button:hover {
   margin-left: 4px;
   font-style: italic;
 }
+/* ===== GUIDE SECTION ===== */
+.guide {
+  margin: 30px 16px;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.guide h2 {
+  margin-bottom: 15px;
+}
+
+.guide-content {
+  display: grid;
+  gap: 12px;
+}
+
+.guide-item {
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.guide-item h3 {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+}
+
+.guide-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+}

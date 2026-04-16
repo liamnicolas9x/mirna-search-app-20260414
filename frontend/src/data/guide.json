@@ -1,0 +1,21 @@
+{
+  "title": "User Guide",
+  "sections": [
+    {
+      "title": "Search miRNA",
+      "content": "Type miRNA name (e.g., miR-30a-5p) to search directly."
+    },
+    {
+      "title": "Search by number",
+      "content": "Typing '30' will automatically map to miR-30."
+    },
+    {
+      "title": "Tail search",
+      "content": "Enter RNA sequence (AUGC, ≥5 bases) to search 3' tail matches."
+    },
+    {
+      "title": "Family search",
+      "content": "Click 'Family' button to view all miRNAs in the same family."
+    }
+  ]
+}

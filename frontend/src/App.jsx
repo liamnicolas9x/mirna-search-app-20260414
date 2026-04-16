@@ -3,6 +3,7 @@ import "./styles.css";
 import "./header.css";
 import logo from "./assets/logo.png";
 import defaultData from "./data/default.json";
+import guide from "./data/guide.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -65,7 +66,7 @@ function renderSeq(seq, seed, tail, showSeed, showColor) {
 }
 
 export default function App() {
-  const inputRef = useRef(null); // ✅ ref cho input
+  const inputRef = useRef(null);
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(defaultData);
@@ -79,7 +80,7 @@ export default function App() {
   const [showColor, setShowColor] = useState(true);
   const [tailMode, setTailMode] = useState(false);
 
-  // ✅ AUTO FOCUS KHI LOAD + AUTO SELECT
+  // focus
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -87,7 +88,28 @@ export default function App() {
     }
   }, []);
 
-  // search logic
+  // wake backend
+  useEffect(() => {
+    fetch(`${API_URL}/health`).catch(() => {});
+  }, []);
+
+  // prefetch
+  useEffect(() => {
+    async function warmup() {
+      try {
+        const res = await fetch(`${API_URL}/search?q=miR`);
+        const data = await res.json();
+
+        if (data.results?.length) {
+          setResults(data.results);
+          setOriginalResults(data.results);
+        }
+      } catch {}
+    }
+    warmup();
+  }, []);
+
+  // search
   useEffect(() => {
     const raw = query.trim();
     if (!raw) return;
@@ -119,7 +141,7 @@ export default function App() {
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 150);
 
     return () => clearTimeout(t);
   }, [query]);
@@ -159,21 +181,39 @@ export default function App() {
     setTimeout(() => setToast(""), 1200);
   }
 
+  // RESET HOME
+  function handleHome() {
+    setQuery("");
+    setResults(defaultData);
+    setOriginalResults(defaultData);
+    setFamilyMode(null);
+    setTailMode(false);
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }
+
   return (
     <div className="app">
       <header className="header">
-        <div className="brand">
+        <div
+          className="brand"
+          onClick={handleHome}
+          style={{ cursor: "pointer" }}
+        >
           <img src={logo} alt="logo" />
           <h1>HGL microRNA Explorer</h1>
         </div>
 
         <input
-          ref={inputRef} // ✅ gắn ref
+          ref={inputRef}
           className="search-input"
           placeholder="Search miRNA or tail sequence..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={(e) => e.target.select()} // ✅ vẫn giữ
+          onFocus={(e) => e.target.select()}
         />
       </header>
 
@@ -250,7 +290,6 @@ export default function App() {
                       {r.seed_m8}
                       {seedPos && (
                         <span className="pos">
-                          {" "}
                           ({seedPos[0]}–{seedPos[1]})
                         </span>
                       )}
@@ -272,6 +311,19 @@ export default function App() {
       </div>
 
       {toast && <div className="toast">{toast}</div>}
+
+      {/* ===== USER GUIDE ===== */}
+      <div className="guide">
+        <h2>{guide.title}</h2>
+        <div className="guide-content">
+          {guide.sections.map((s, i) => (
+            <div key={i} className="guide-item">
+              <h3>{s.title}</h3>
+              <p>{s.content}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <footer className="footer">
         <div>HGL web-tool. Database based on TargetScan v8.0</div>
