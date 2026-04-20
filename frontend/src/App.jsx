@@ -3,6 +3,7 @@ import "./styles.css";
 import "./header.css";
 import logo from "./assets/logo.png";
 import defaultData from "./data/default.json";
+import lightDB from "./data/light_db.json";
 import guide from "./data/guide.json";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -80,7 +81,13 @@ export default function App() {
   const [showColor, setShowColor] = useState(true);
   const [tailMode, setTailMode] = useState(false);
 
-  // focus
+  // ===== HYBRID STATE =====
+  const [backendReady, setBackendReady] = useState(false);
+  const [useLocal, setUseLocal] = useState(true);
+
+  // ===== CACHE =====
+  const cacheRef = useRef({});
+
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -88,28 +95,64 @@ export default function App() {
     }
   }, []);
 
-  // wake backend
+  // wake backend + detect ready
   useEffect(() => {
-    fetch(`${API_URL}/health`).catch(() => {});
-  }, []);
+    let alive = true;
 
-  // prefetch
-  useEffect(() => {
-    async function warmup() {
+    const check = async () => {
       try {
-        const res = await fetch(`${API_URL}/search?q=miR`);
-        const data = await res.json();
-
-        if (data.results?.length) {
-          setResults(data.results);
-          setOriginalResults(data.results);
+        await fetch(`${API_URL}/health`);
+        if (alive) {
+          setBackendReady(true);
+          setUseLocal(false);
         }
       } catch {}
-    }
-    warmup();
+    };
+
+    const interval = setInterval(check, 3000);
+    check();
+
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  // search
+  // preload backend
+  useEffect(() => {
+    if (!backendReady) return;
+
+    fetch(`${API_URL}/search?q=miR`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.results?.length) {
+          cacheRef.current["mir"] = data.results;
+        }
+      })
+      .catch(() => {});
+  }, [backendReady]);
+
+  // ===== LOCAL SEARCH =====
+  function localSearch(data, query) {
+    const q = query.toLowerCase();
+
+    return data
+      .map((r) => {
+        let rank = 5;
+
+        if (r.mirbase_id?.toLowerCase().includes(q)) rank = 0;
+        else if (r.mirbase_accession?.toLowerCase().includes(q)) rank = 1;
+        else if (r.mature_sequence?.toLowerCase().includes(q)) rank = 2;
+        else if (r.seed_m8?.toLowerCase().includes(q)) rank = 3;
+        else if (r.mir_family?.toLowerCase().includes(q)) rank = 4;
+
+        return { ...r, rank };
+      })
+      .filter((r) => r.rank < 5)
+      .sort((a, b) => a.rank - b.rank);
+  }
+
+  // ===== SEARCH =====
   useEffect(() => {
     const raw = query.trim();
     if (!raw) return;
@@ -121,7 +164,46 @@ export default function App() {
 
     const t = setTimeout(async () => {
       setLoading(true);
+
       try {
+        // LOCAL FIRST
+        if (useLocal) {
+          let base = localSearch(lightDB, q);
+
+          if (isTail) {
+            base = base.filter((r) =>
+              r.mature_sequence?.toUpperCase().endsWith(q)
+            );
+          }
+
+          setResults(base);
+          setOriginalResults(base);
+
+          if (backendReady) {
+            if (cacheRef.current[q]) {
+              setResults(cacheRef.current[q]);
+              setOriginalResults(cacheRef.current[q]);
+            } else {
+              const res = await fetch(`${API_URL}/search?q=${q}`);
+              const data = await res.json();
+
+              cacheRef.current[q] = data.results || [];
+
+              setResults(cacheRef.current[q]);
+              setOriginalResults(cacheRef.current[q]);
+            }
+          }
+
+          return;
+        }
+
+        // BACKEND + CACHE
+        if (cacheRef.current[q]) {
+          setResults(cacheRef.current[q]);
+          setOriginalResults(cacheRef.current[q]);
+          return;
+        }
+
         const res = await fetch(`${API_URL}/search?q=${q}`);
         const data = await res.json();
 
@@ -132,6 +214,8 @@ export default function App() {
             r.mature_sequence?.toUpperCase().endsWith(q)
           );
         }
+
+        cacheRef.current[q] = base;
 
         setResults(base);
         setOriginalResults(base);
@@ -144,10 +228,15 @@ export default function App() {
     }, 150);
 
     return () => clearTimeout(t);
-  }, [query]);
+  }, [query, useLocal, backendReady]);
 
   async function handleFamilyClick(row) {
     const family = row.mir_family;
+
+    if (cacheRef.current[family]) {
+      setResults(cacheRef.current[family]);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -162,6 +251,8 @@ export default function App() {
         row,
         ...same.filter((r) => r.mirbase_id !== row.mirbase_id),
       ];
+
+      cacheRef.current[family] = final;
 
       setResults(final);
       setFamilyMode({ family });
@@ -181,7 +272,6 @@ export default function App() {
     setTimeout(() => setToast(""), 1200);
   }
 
-  // RESET HOME
   function handleHome() {
     setQuery("");
     setResults(defaultData);
@@ -198,11 +288,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div
-          className="brand"
-          onClick={handleHome}
-          style={{ cursor: "pointer" }}
-        >
+        <div className="brand" onClick={handleHome}>
           <img src={logo} alt="logo" />
           <h1>HGL microRNA Explorer</h1>
         </div>
@@ -239,7 +325,11 @@ export default function App() {
               )}
 
               <span>
-                {loading ? "Loading..." : `${results.length} records`}
+                {useLocal
+                  ? "⚡ Fast (local)"
+                  : loading
+                  ? "Loading..."
+                  : `${results.length} records`}
               </span>
             </div>
           </div>
@@ -312,7 +402,6 @@ export default function App() {
 
       {toast && <div className="toast">{toast}</div>}
 
-      {/* ===== USER GUIDE ===== */}
       <div className="guide">
         <h2>{guide.title}</h2>
         <div className="guide-content">
@@ -326,7 +415,7 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <div>HGL web-tool. Database based on TargetScan v8.0</div>
+        <div>HGL web-tool. Database based on miRBase and TargetScan v8.0</div>
         <div>
           Contact:{" "}
           <a

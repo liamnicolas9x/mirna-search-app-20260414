@@ -1,0 +1,16 @@
+[
+  {
+    "mirbase_id": "miR-30a-5p",
+    "mirbase_accession": "MIMAT0000087",
+    "mature_sequence": "UGUAAACAUCCUCGACUGGAAG",
+    "seed_m8": "GUAAACA",
+    "mir_family": "30-5p"
+  },
+  {
+    "mirbase_id": "miR-30a-3p",
+    "mirbase_accession": "MIMAT0000088",
+    "mature_sequence": "CUUUCAGUCGGAUGUUUGCAGC",
+    "seed_m8": "UUUCAGU",
+    "mir_family": "30-3p"
+  }
+]
