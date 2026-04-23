@@ -1,5 +1,4 @@
 MiRBase ID,MiRBase Accession,Mature sequence,Seed+m8,Family Conservation?,miR family,Fa1,Fa2,Fa3,Fa4,Fa5,Fa6,Fa7
-a,bb,ccccccccccccccccccccccccc,q,u,e,r,k,m,n,b,g,x
 let-7a-5p,MIMAT0000062,UGAGGUAGUAGGUUGUAUAGUU,GAGGUAG,2,let-7-5p/98-5p,let-7-5p,,,,,,
 let-7b-5p,MIMAT0000063,UGAGGUAGUAGGUUGUGUGGUU,GAGGUAG,2,let-7-5p/98-5p,let-7-5p,,,,,,
 let-7c-5p,MIMAT0000064,UGAGGUAGUAGGUUGUAUGGUU,GAGGUAG,2,let-7-5p/98-5p,let-7-5p,miR-98-5p,,,,,
@@ -2606,3 +2605,4 @@ miR-99b-3p,MIMAT0004678,CAAGCUCGUGUCUGUGGGUCCG,AAGCUCG,-1,99-3p,miR-99-3p,,,,,,
 miR-100-5p,MIMAT0000098,AACCCGUAGAUCCGAACUUGUG,ACCCGUA,2,99-5p/100-5p,miR-99-5p,miR-100-5p,,,,,
 miR-99a-5p,MIMAT0000097,AACCCGUAGAUCCGAUCUUGUG,ACCCGUA,2,99-5p/100-5p,miR-99-5p,miR-100-5p,,,,,
 miR-99b-5p,MIMAT0000689,CACCCGUAGAACCGACCUUGCG,ACCCGUA,2,99-5p/100-5p,miR-99-5p,miR-100-5p,,,,,
+abc,def,ghi,jkl,mno,pqr,stu,vwx,yz,,,,

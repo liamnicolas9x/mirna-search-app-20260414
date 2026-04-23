@@ -1,0 +1,2 @@
+Double click "rebuild_db.bat"
+Then, double click "restart_backend.bat" (để reload lại data vừa mới cập nhật)
