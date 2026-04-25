@@ -5,9 +5,12 @@ from pathlib import Path
 
 DB_PATH = Path("mirna.db")
 CSV_PATH = Path("data.csv")
+SNP_CSV_PATH = Path("data/snp_in_mature.csv")
 
 TABLE_MAIN = "mirna_records"
 TABLE_FTS = "mirna_fts"
+
+_SNP_LOOKUP_CACHE = None
 
 
 def normalize(name: str):
@@ -29,6 +32,68 @@ def quote(name: str):
 def is_rna(seq: str):
     s = seq.upper()
     return all(c in "AUGC" for c in s) and len(s) >= 5
+
+
+def normalize_mirna_id(mirna_id: str):
+    value = mirna_id.strip()
+    if value.startswith("hsa-"):
+        return value[4:]
+    return value
+
+
+def load_snp_in_mature():
+    global _SNP_LOOKUP_CACHE
+
+    if _SNP_LOOKUP_CACHE is not None:
+        return _SNP_LOOKUP_CACHE
+
+    lookup = {}
+    if not SNP_CSV_PATH.exists():
+        _SNP_LOOKUP_CACHE = lookup
+        return lookup
+
+    with open(SNP_CSV_PATH, "r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            mirna = normalize_mirna_id(row.get("miRNA", ""))
+            if not mirna:
+                continue
+
+            try:
+                pos_in_mature = int(row.get("pos_in_mature", ""))
+            except ValueError:
+                continue
+
+            lookup.setdefault(mirna, []).append({
+                "snp_id": row.get("SNP_id", "").strip(),
+                "ref": row.get("Ref", "").strip(),
+                "alt": row.get("Alt", "").strip(),
+                "pos_in_mature": pos_in_mature,
+                "functional_region": row.get("functional_region", "").strip(),
+                "chr": row.get("Chr", "").strip(),
+                "position": row.get("Position", "").strip(),
+                "g": row.get("G", "").strip(),
+            })
+
+    for snps in lookup.values():
+        snps.sort(key=lambda item: (
+            item["pos_in_mature"],
+            item["snp_id"],
+            item["alt"],
+        ))
+
+    _SNP_LOOKUP_CACHE = dict(sorted(lookup.items()))
+    return _SNP_LOOKUP_CACHE
+
+
+def get_all_snp_in_mature():
+    return load_snp_in_mature()
+
+
+def get_snp_in_mature_by_mirna(mirna_id: str):
+    lookup = load_snp_in_mature()
+    return lookup.get(normalize_mirna_id(mirna_id), [])
 
 
 # ===== BUILD DATABASE =====
