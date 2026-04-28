@@ -755,7 +755,11 @@ export default function App() {
     return (
       <div className="app">
         <header className="header">
-          <div className="brand" onClick={handleHome}>
+          <div
+            className="brand"
+            style={{ cursor: "pointer" }}
+            onClick={() => (window.location.href = "https://hgltools.vercel.app")}
+          >
             <img src={logo} alt="logo" />
             <h1>HGL microRNA Explorer</h1>
           </div>
@@ -799,7 +803,11 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="brand" onClick={handleHome}>
+        <div
+          className="brand"
+          style={{ cursor: "pointer" }}
+          onClick={() => (window.location.href = "https://hgltools.vercel.app")}
+        >
           <img src={logo} alt="logo" />
           <h1>HGL microRNA Explorer</h1>
         </div>
